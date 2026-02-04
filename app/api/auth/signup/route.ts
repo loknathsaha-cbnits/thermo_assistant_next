@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server"
-import bcrypt from "bcryptjs"
 import { z } from "zod"
-import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs"
+import { prisma } from "@/lib/prisma"
+import { NextRequest, NextResponse } from "next/server"
 
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required").max(255, "Name must be less than 255 characters"),
-  email: z.string().email("Invalid email"),
+  email: z.email("Invalid email"),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters long")
