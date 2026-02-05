@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
-    <div className="container flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
+    <div className="container flex min-h-screen min-w-screen items-center justify-center bg-zinc-50 dark:bg-black">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-4xl font-bold">Welcome</CardTitle>
