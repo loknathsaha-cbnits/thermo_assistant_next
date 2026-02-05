@@ -66,7 +66,7 @@ export function ChatInterface() {
             />
           </div>
           <p className="mx-auto text-center text-xs font-normal tracking-tight leading-3 text-primary/75 whitespace-nowrap">
-            Motion can make mistakes. Check before use.
+            Assistant can make mistakes. Please verify the information before using it.
           </p>
         </div>
       </div>
