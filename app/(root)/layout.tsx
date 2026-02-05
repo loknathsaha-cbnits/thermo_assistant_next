@@ -20,7 +20,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <SidebarProvider>
-      <div className="container flex min-h-screen transition ease-in-out overflow-x-hidden">
+      <div className="flex min-h-screen transition ease-in-out overflow-x-hidden">
         <AppSidebar />
         <main className="grow">
           <div className="border-b px-2 md:px-6 py-2 sticky top-0 right-0  h-14 flex items-center justify-between ">

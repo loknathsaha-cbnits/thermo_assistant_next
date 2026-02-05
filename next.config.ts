@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  turbopack: {}, // 👈 silence the error
-}
+  turbopack: {},
+};
 
 module.exports = nextConfig;
