@@ -19,6 +19,7 @@ const items = [
 type ConversationType = {
   id: string;
   title: string;
+  firstMessage: string;
 };
 
 const fetcher = (url: string) =>
@@ -65,12 +66,12 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-sm">Chats</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {conversations.map((c: ConversationType) => {
+              {conversations.map((c: ConversationType) => {    
                 const isActive = pathName === `/chat/${c.id}`;
                 return (
                   <SidebarMenuItem key={c.id} className={`-mb-1 rounded-lg text-sm leading-3 font-sans hover:bg-sidebar-accent ${isActive ? "bg-sidebar-accent" : ""}`}>
                     <Link href={`/chat/${c.id}`} className="truncate block py-3 px-2 ">
-                      {c.title || "New Chat"}
+                      { c.title === "New chat" ? c.firstMessage : c.title }
                     </Link>
                   </SidebarMenuItem>
                 );

@@ -83,7 +83,8 @@ export function NewChatWelcome() {
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          toast.error("Daily quota limit exceeded. Please try again tomorrow.");
+          router.push('/chat');
         }
 
         const reader = response.body?.getReader();
@@ -156,11 +157,7 @@ export function NewChatWelcome() {
       } catch (error: unknown) {
         console.error("Error creating conversation:", error);
 
-        if (error instanceof Error && error.message.includes("429")) {
-          toast.error("Rate limit exceeded. Please try again later.");
-        } else {
-          toast.error("Failed to start conversation. Please try again.");
-        }
+        toast.error("Daily quota limit exceeded. Please try again tomorrow.");
 
         setMessages([]);
         setShowWelcome(true);

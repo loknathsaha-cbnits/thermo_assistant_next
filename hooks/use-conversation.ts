@@ -59,7 +59,7 @@ export function useConversation(conversationId: string | null) {
     await mutateMessages(prev => [...(prev || []), streamingMessage], false);
 
     try {
-      const response = await fetch('/api/chat/stream', {
+      const response = await fetch('/api/chat/stream2', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,7 +71,9 @@ export function useConversation(conversationId: string | null) {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // throw new Error(`HTTP error! status: ${response.status}`);
+        toast.error("Daily quota limit exceeded. Please try again tomorrow.");
+        router.push('/chat');
       }
 
       const reader = response.body?.getReader();
@@ -135,19 +137,14 @@ export function useConversation(conversationId: string | null) {
 
     } catch (error: unknown) {
       console.error("Error sending message:", error);
-
-      if (error instanceof Error && error.message.includes("429")) {
-        toast.error("Rate limit exceeded. Please try again later.");
-      } else {
-        toast.error("Failed to send message. Please try again.");
-      }
+      toast.error("Daily quota limit exceeded. Please try again tomorrow.");
 
       // Remove both user and assistant messages on error
       await mutateMessages(prev => prev?.slice(0, -2) || [], false);
     } finally {
       setIsSendingMessage(false);
     }
-  }, [user, conversationId, mutateMessages]);
+  }, [user, conversationId, mutateMessages, router]);
 
   return {
     messages,

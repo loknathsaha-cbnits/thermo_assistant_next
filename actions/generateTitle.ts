@@ -1,83 +1,74 @@
 'use server';
 
 import { prisma } from "@/lib/prisma";
-import { geminiModel } from "@/lib/gemini";
-
-/* ----------------------------- Types ----------------------------- */
+import { gemini } from "@/lib/gemini";
 
 export type MessageType = {
   role: "user" | "assistant";
   content: string;
 };
 
-/* ------------------------ Helper Functions ------------------------ */
-
-function isTrivialConversation(messages: MessageType[]): boolean {
-  const fullUserText = messages
-    .filter(m => m.role === "user")
-    .map(m => m.content.toLowerCase())
-    .join(" ");
-
-  const greetings = [
-    "hi",
-    "hello",
-    "hey",
-    "how are you",
-    "good morning",
-    "good evening",
-    "what's up",
-    "sup",
-    "yo",
-    "hello there",
-    "hi there",
-  ];
-
-  const isShort = fullUserText.replace(/\s+/g, "").length < 40;
-  const isMostlyGreeting = greetings.some(greet =>
-    fullUserText.includes(greet)
-  );
-
-  return isShort && isMostlyGreeting;
-}
-
-/* ------------------------- Server Action -------------------------- */
-
 export async function generateTitle(
   conversationId: string,
   messages: MessageType[]
 ) {
-  if (isTrivialConversation(messages)) {
-    await prisma.conversation.update({
-      where: { id: conversationId },
-      data: { title: "New chat" },
-    });
+  // 1. Check if title already exists — never regenerate
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: { title: true },
+  });
 
-    return { success: true, newTitle: "New chat" };
+  if (conversation?.title && conversation.title !== "New chat") {
+    return { success: true, newTitle: conversation.title };
   }
 
-  // Convert chat history to Gemini format
+  // 2. Require at least one user message
+  const firstUserMessage = messages.find(m => m.role === "user");
+  if (!firstUserMessage) {
+    return { success: false, error: "No user message to generate title from" };
+  }
+
+  // 3. Optional: include first assistant reply if it exists
+  const firstAssistantMessage = messages.find(m => m.role === "assistant");
+
+  const conversationSnippet = [
+    `User: ${firstUserMessage.content}`,
+    firstAssistantMessage
+      ? `Assistant: ${firstAssistantMessage.content}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   const contents = [
     {
       role: "user",
       parts: [
         {
           text:
-            "You are an expert at creating short, concise titles for conversations. " +
-            "Return a 2–5 word noun phrase. Do not use quotation marks.\n\n" +
-            messages
-              .map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
-              .join("\n"),
+            "Create a short, concise 2-5 word noun-phrase title for this conversation. " +
+            "Do not use quotation marks.\n\n" +
+            conversationSnippet,
         },
       ],
     },
   ];
 
   try {
+    if (!process.env.GEMINI_TITLE_API_KEY || !process.env.GENERATIVE_LLM_MODEL) {
+      throw new Error("Missing gemini model or api key");
+    }
+
+    const geminiModel = gemini({
+      apiKey: process.env.GEMINI_TITLE_API_KEY,
+      model: process.env.GENERATIVE_LLM_MODEL,
+    });
+
     const result = await geminiModel.generateContent({
       contents,
       generationConfig: {
         temperature: 0.2,
-        maxOutputTokens: 25,
+        maxOutputTokens: 20,
       },
     });
 

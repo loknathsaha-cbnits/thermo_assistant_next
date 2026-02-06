@@ -1,14 +1,21 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = process.env.GEMINI_API_KEY;
-
-if (!apiKey) {
-  throw new Error("Missing GEMINI_API_KEY");
+interface Gemini {
+  apiKey: string;
+  model: string;
 }
 
-// Create ONE client instance
-const genAI = new GoogleGenerativeAI(apiKey);
+export const gemini = ({apiKey, model}: Gemini) => {
+  if (!model) {
+    throw new Error("Missing gemini model");
+  }
+  
+  if (!apiKey) {
+    throw new Error("Missing gemini api key");
+  }
 
-export const geminiModel = genAI.getGenerativeModel({
-  model: process.env.GENERATIVE_LLM_MODEL || "gemini-2.5-flash",
-});
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const geminiModel = genAI.getGenerativeModel({ model });
+
+  return geminiModel;
+}
