@@ -6,7 +6,7 @@ const pinecone = new Pinecone({
 
 const INDEX_NAME = process.env.INDEX_NAME!;
 
-export const pineconeIndex = pinecone.index(INDEX_NAME);
+export const pineconeIndex = pinecone.index({name: INDEX_NAME});
 export async function doesIndexExist(): Promise<boolean> {
   const indexes = await pinecone.listIndexes();
   return (
@@ -18,11 +18,11 @@ export async function ensureIndexExists() {
   const exists = await doesIndexExist();
 
   if (!exists) {
-    console.log("🧱 Creating Pinecone index:", INDEX_NAME);
+    console.log("Creating Pinecone index:", INDEX_NAME);
 
     await pinecone.createIndex({
       name: INDEX_NAME,
-      dimension: 384, // ✅ MiniLM dimension
+      dimension: 384, 
       metric: "cosine",
       spec: {
         serverless: {
@@ -30,18 +30,17 @@ export async function ensureIndexExists() {
           region: "us-east-1",
         },
       },
+      // Optimization: The SDK will poll for you until the index is live
+      waitUntilReady: true, 
+      // Optional: Prevents errors if the index was created by another process simultaneously
+      suppressConflicts: true 
     });
 
-    // ⏳ Wait until Pinecone actually provisions it
-    await new Promise((resolve) => setTimeout(resolve, 10_000));
-
-    console.log("✅ Pinecone index created");
+    console.log("Pinecone index created and ready for data.");
   }
 }
 
-/**
- * Safe empty check (ONLY after ensureIndexExists)
- */
+
 export async function isIndexEmpty(): Promise<boolean> {
   const stats = await pineconeIndex.describeIndexStats();
   return (stats.totalRecordCount ?? 0) === 0;

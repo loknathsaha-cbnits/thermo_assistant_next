@@ -1,46 +1,51 @@
-import fs from "fs";
-import path from "path";
-// import pdf from "pdf-parse";
 import { questions } from "@/constants/questions";
-import { embedText } from "@/lib/embeddings/geminiEmbedding";
-import { pineconeIndex } from "@/lib/vector/pinecone";
-import type {
-  PineconeRecord,
-  RecordMetadata,
-} from "@pinecone-database/pinecone";
-
-/**
- * Extract text from PDF (Node-safe, no workers)
- */
-// async function extractTextFromPdf(filePath: string): Promise<string> {
-//   const buffer = fs.readFileSync(filePath);
-//   const data = await pdf(buffer);
-//   return data.text;
-// }
+import { embedText } from "@/lib/embeddings/embedding";
+import { 
+  pineconeIndex, 
+  // doesIndexExist, 
+  ensureIndexExists, 
+  isIndexEmpty 
+} from "@/lib/vector/pinecone"; // Import your helpers
+import type { PineconeRecord, RecordMetadata } from "@pinecone-database/pinecone";
 
 export async function ingestIfNeeded(): Promise<void> {
-  const vectors: PineconeRecord<RecordMetadata>[] = [];
+  // --- STEP 1: INFRASTRUCTURE CHECK ---
+  // Ensure the index exists in Pinecone first
+  await ensureIndexExists();
 
-  for (let i = 0; i < questions.length; i++) {
-    const embedding = await embedText(questions[i]);
+  // --- STEP 2: CONTENT CHECK ---
+  // Check if it already has data to avoid duplicate work/costs
+  const isEmpty = await isIndexEmpty();
+  if (!isEmpty) {
+    console.log("Index already populated. Skipping ingestion.");
+    return;
+  }
 
-    vectors.push({
-      id: `question-${i}`,
-      values: embedding,
+  console.log(`Starting ingestion of ${questions.length} questions...`);
+
+  const BATCH_SIZE = 50; 
+  
+  for (let i = 0; i < questions.length; i += BATCH_SIZE) {
+    const batchQuestions = questions.slice(i, i + BATCH_SIZE);
+
+    const embeddings = await Promise.all(
+      batchQuestions.map(q => embedText(q))
+    );
+
+    const vectors: PineconeRecord<RecordMetadata>[] = batchQuestions.map((q, index) => ({
+      id: `question-${i + index}`,
+      values: embeddings[index],
       metadata: {
-        question: questions[i],
+        question: q,
         source: "thermofisher_pdf",
       },
-    });
+    }));
+
+    // Use the object pattern for the upsert
+    await pineconeIndex.upsert({ records: vectors });
+    
+    console.log(`Progress: ${Math.min(i + BATCH_SIZE, questions.length)}/${questions.length}`);
   }
 
-  const BATCH_SIZE = 100;
-
-  for (let i = 0; i < vectors.length; i += BATCH_SIZE) {
-    await pineconeIndex.upsert({
-      records: vectors.slice(i, i + BATCH_SIZE),
-    });
-  }
-
-  console.log("✅ Pinecone index populated");
+  console.log("Pinecone index successfully populated.");
 }
