@@ -1,7 +1,8 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  turbopack: {},
-  serverExternalPackages: ["@huggingface/transformers"],
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  // Critical: Prevents Next.js from bundling the heavy C++ binaries
+  serverExternalPackages: ["@huggingface/transformers", "onnxruntime-node"],
 };
 
-module.exports = nextConfig;
+export default nextConfig;

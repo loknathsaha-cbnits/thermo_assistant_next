@@ -20,6 +20,7 @@ export async function POST(req: Request) {
 
         // 2. Perform the semantic search
         const suggestions = await suggestQuestions(body.query, 3);
+        console.log(suggestions)
 
         return NextResponse.json({ suggestions });
     } catch (error) {

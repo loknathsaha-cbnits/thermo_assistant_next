@@ -19,13 +19,13 @@ export async function suggestQuestions(
     topK,
     includeMetadata: true,
   });
-  console.log(result)
+  // console.log(result)
 
   const MIN_SIMILARITY_SCORE = 0.7;
 
   return (
-    result.matches
-      ?.filter(match => match.score !== undefined && match.score >= MIN_SIMILARITY_SCORE)
-      .map(match => (match.metadata as QuestionMetadata).question) ?? []
+    // check by score: .filter(match => match.score !== undefined && match.score >= MIN_SIMILARITY_SCORE)
+
+    result.matches?.map(match => (match.metadata as QuestionMetadata).question) ?? []
   );
 }
