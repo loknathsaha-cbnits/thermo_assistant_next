@@ -9,6 +9,8 @@ import { mutate } from "swr";
 import { Message } from "@/types/llm-response";
 import { ChatMessage } from "./chat-message";
 import { v4 as uuidv4 } from "uuid";
+import { SuggestionList } from "./suggestion-list";
+import { useSuggestions } from "@/hooks/use-suggestions";
 
 const examplePrompts = [
   {
@@ -43,10 +45,15 @@ export function NewChatWelcome() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const { suggestions, isLoading: isSuggestionsLoading } = useSuggestions(searchQuery);
+
   const handleSubmit = useCallback(
     async (prompt: string) => {
       if (!prompt.trim() || !session?.user || isLoading) return;
 
+      setSearchQuery("");
       const userMessage: Message = {
         id: uuidv4(),
         role: "user",
@@ -126,11 +133,11 @@ export function NewChatWelcome() {
                     prev.map((msg) =>
                       msg.id === assistantMessageId
                         ? {
-                            ...msg,
-                            id: data.messageId,
-                            timestamp: new Date(data.timestamp),
-                            isStreaming: false,
-                          }
+                          ...msg,
+                          id: data.messageId,
+                          timestamp: new Date(data.timestamp),
+                          isStreaming: false,
+                        }
                         : msg,
                     ),
                   );
@@ -195,6 +202,10 @@ export function NewChatWelcome() {
                 value={inputValue}
                 onChange={setInputValue}
                 onSubmit={handleSubmit}
+                setSearchQuery={setSearchQuery}
+                suggestions={suggestions}
+                selectedIndex={selectedIndex}
+                onSelectedIndexChange={setSelectedIndex}
                 isLoading={isLoading}
                 placeholder="Ask questions on thermofisher scientific..."
               />
@@ -212,45 +223,59 @@ export function NewChatWelcome() {
     <div className="container mx-auto py-3 h-[calc(100vh-3.5rem)] w-full flex flex-col lg:justify-center justify-between items-center gap-8">
       <div className="h-0 w-full lg:hidden" />
 
-      <main className="flex flex-col justify-center items-center gap-8">
+      <main className="flex flex-col justify-center items-center gap-8 w-full">
         <div className="text-center space-y-4 max-w-2xl">
           <h1 className="text-3xl font-semibold tracking-tight text-primary">
             Ask anything about ThermoFisher Scientific
           </h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl w-full">
-          {examplePrompts.map((example, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                setInputValue(example.prompt);
-                inputRef.current?.focus();
-              }}
-              className="p-4 text-left border rounded-lg hover:bg-accent transition-colors"
-              disabled={isLoading}
-            >
-              <h3 className="font-semibold text-sm mb-2">{example.title}</h3>
-              <p className="text-xs text-muted-foreground line-clamp-2 overflow-hidden">
-                {example.prompt}
-              </p>
-            </button>
-          ))}
-        </div>
-      </main>
-
-      <div className="w-full">
-        <div className="p-2 bg-accent rounded-[25px]">
+        <div className="w-full max-w-4xl p-2 bg-accent rounded-[25px]">
           <ChatInput
             ref={inputRef}
             value={inputValue}
             onChange={setInputValue}
+            setSearchQuery={setSearchQuery}
+            suggestions={suggestions}
+            selectedIndex={selectedIndex}
+            onSelectedIndexChange={setSelectedIndex}
             onSubmit={handleSubmit}
             isLoading={isLoading}
             placeholder="Describe the scientific concept you want to visualize..."
           />
         </div>
-      </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl w-full h-40">
+          {suggestions.length > 0 || inputValue ? (
+            <SuggestionList
+              suggestions={suggestions}
+              onSelect={(suggestion) => {
+                setInputValue(suggestion);
+              }}
+              isLoading={isLoading}
+              selectedIndex={selectedIndex}
+              className="md:col-span-2"
+            />
+          ) : (
+            examplePrompts.map((example, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setInputValue(example.prompt);
+                  inputRef.current?.focus();
+                }}
+                className="p-4 text-left border rounded-lg hover:bg-accent transition-colors"
+                disabled={isLoading}
+              >
+                <h3 className="font-semibold text-sm mb-2">{example.title}</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2 overflow-hidden">
+                  {example.prompt}
+                </p>
+              </button>
+            ))
+          )}
+        </div>
+      </main>
     </div>
   );
 }

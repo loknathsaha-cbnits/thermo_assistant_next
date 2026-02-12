@@ -7,8 +7,8 @@ export async function proxy(request: NextRequest) {
     request.cookies.get('next-auth.session-token')?.value ||
     request.cookies.get('__Secure-next-auth.session-token')?.value;
 
-  const protectedPaths = ['/api/auth/signout', '/chat', '/library'];
-  const publicPaths = ['/', '/auth/signin', '/auth/signup', '/api/test-embed', '/api/chat/suggest'];
+  const protectedPaths = ['/api/auth/signout', '/api/chat/stream', '/api/chat/suggest', '/chat'];
+  const publicPaths = ['/', '/auth/signin', '/auth/signup'];
 
   const isProtectedPath =
     protectedPaths.some(p => path === p || path.startsWith(`${p}/`));

@@ -6,28 +6,59 @@ import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
   value: string;
-  onChange: (value: string) => void;
-  onSubmit: (value: string) => void;
+  suggestions: string[];
+  selectedIndex: number;
   isLoading?: boolean;
   placeholder?: string;
+  onChange: (value: string) => void;
+  onSubmit: (value: string) => void;
+  setSearchQuery?: (value: string) => void;
+  onSelectedIndexChange: (index: number) => void;
 }
 
 export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
-  ({ value, onChange, onSubmit, isLoading = false, placeholder }, ref) => {
+  ({ value, suggestions, selectedIndex, isLoading = false, placeholder, onChange, onSubmit, setSearchQuery, onSelectedIndexChange }, ref) => {
     const localRef = useRef<HTMLTextAreaElement>(null);
     const combinedRef = (ref as React.RefObject<HTMLTextAreaElement>) || localRef;
+
+    // Reset selected index when suggestions change
+    useEffect(() => {
+      onSelectedIndexChange(-1);
+    }, [suggestions, onSelectedIndexChange]);
 
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        if (value.trim()) {
+        // If a suggestion is selected, submit it; otherwise submit current value
+        if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
+          onSubmit(suggestions[selectedIndex]);
+        } else if (value.trim()) {
           onSubmit(value.trim());
         }
+        onSelectedIndexChange(-1);
+        return;
+      }
+
+      if (suggestions.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        const nextIndex = (selectedIndex + 1) % suggestions.length;
+        onSelectedIndexChange(nextIndex);
+      }
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        const prevIndex = (selectedIndex - 1 + suggestions.length) % suggestions.length;
+        onSelectedIndexChange(prevIndex);
       }
     };
 
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       onChange(e.target.value);
+      if (setSearchQuery) {
+        setSearchQuery(e.target.value);
+      }
       autoResize(e.target);
     };
 
@@ -59,9 +90,12 @@ export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
             className="rounded-full px-1"
             size="icon"
             onClick={() => {
-              if (value.trim()) {
+              if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
+                onSubmit(suggestions[selectedIndex]);
+              } else if (value.trim()) {
                 onSubmit(value.trim());
               }
+              onSelectedIndexChange(-1);
             }}
             disabled={isLoading || !value.trim()}
           >

@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from "uuid";
 
 const fetcher = (url: string) => axios.get(url).then(res => res.data);
 
-export function useConversation(conversationId: string | null) {
+export function useConversation(conversationId: string | null, setSuggestions?: (suggestions: string[]) => void) {
   const router = useRouter();
   const { data: session } = useSession();
   const user = session?.user;
@@ -35,6 +35,9 @@ export function useConversation(conversationId: string | null) {
   const handleSendMessage = useCallback(async (userPrompt: string) => {
     if (!userPrompt.trim() || !user || !conversationId) return;
 
+    if (setSuggestions) {
+      setSuggestions([]);
+    }
     const userMessage: Message = {
       id: uuidv4(),
       role: "user",
@@ -144,7 +147,7 @@ export function useConversation(conversationId: string | null) {
     } finally {
       setIsSendingMessage(false);
     }
-  }, [user, conversationId, mutateMessages, router]);
+  }, [user, conversationId, mutateMessages, router, setSuggestions]);
 
   return {
     messages,
