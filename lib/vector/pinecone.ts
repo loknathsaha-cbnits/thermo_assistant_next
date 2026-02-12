@@ -6,7 +6,9 @@ const pinecone = new Pinecone({
 
 const INDEX_NAME = process.env.INDEX_NAME!;
 
+// pinecone client/object creation
 export const pineconeIndex = pinecone.index({name: INDEX_NAME});
+
 export async function doesIndexExist(): Promise<boolean> {
   const indexes = await pinecone.listIndexes();
   return (

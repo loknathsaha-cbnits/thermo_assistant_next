@@ -11,7 +11,7 @@ export async function suggestQuestions(
   }
 
   const queryEmbedding = await embedText(userQuery);
-  console.log("Vector Dimension:", queryEmbedding.length);
+  // console.log("Vector Dimension:", queryEmbedding.length);
 
   const result = await pineconeIndex.query({
     vector: queryEmbedding,
