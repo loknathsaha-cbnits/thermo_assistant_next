@@ -18,7 +18,7 @@ export async function suggestQuestions(
     topK,
     includeMetadata: true,
   });
-  console.log("Parsed result is: ", result)
+  // console.log("Parsed result is: ", result)
   // const MIN_SIMILARITY_SCORE = 0.7;
 
   // return (
@@ -35,7 +35,7 @@ export async function suggestQuestions(
   type: match.metadata?.type,
   }));
 
-  console.log(formatted)
+  // console.log(formatted)
 
   return result.matches
     ?.map(match => (match.metadata as QuestionMetadata)?.text) // 1. Optional chaining
