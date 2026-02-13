@@ -25,6 +25,11 @@ export function NewChatWelcome() {
 
   const [dialogue] = useState(() => dialogues[Math.floor(Math.random() * dialogues.length)]);
 
+  const [randomExamples] = useState(() =>
+    [...examplePrompts]
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 2)
+  );
   const handleSubmit = useCallback(
     (prompt: string) => {
       handleSendMessage(prompt);
@@ -115,10 +120,7 @@ export function NewChatWelcome() {
               className="md:col-span-2"
             />
           ) : (
-            [...examplePrompts]
-              .sort(() => 0.5 - Math.random())
-              .slice(0, 2)
-              .map((example, index) => (
+            randomExamples.map((example, index) => (
                 <button
                   key={index}
                   onClick={() => {
